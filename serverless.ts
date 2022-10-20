@@ -3,10 +3,14 @@ import type { AWS } from '@serverless/typescript';
 const serverlessConfiguration: AWS = {
   service: 'certificateignite',
   frameworkVersion: '3',
-  plugins: ['serverless-esbuild', "serverless-offline"],
+  plugins: [
+    "serverless-esbuild",
+    "serverless-dynamodb-local",
+    "serverless-offline",
+  ],
   provider: {
     name: 'aws',
-    runtime: 'nodejs14.x',
+    runtime: 'nodejs16.x',
     apiGateway: {
       minimumCompressionSize: 1024,
       shouldStartNameWithService: true,
@@ -18,19 +22,18 @@ const serverlessConfiguration: AWS = {
   },
   // import the function via paths
   functions: {
-    hello: {
-      handler: "src/functions/hello.handler",
+    generateCertificate: {
+      handler: "src/functions/generateCertificate.handler",
       events: [
         {
           http: {
-            path: "hello",
-            method: "get",
-
+            path: "generateCertificate",
+            method: "post",
             cors: true,
-          }
-        }
-      ]
-    }
+          },
+        },
+      ],
+    },
   },
   package: { individually: true },
   custom: {
@@ -43,6 +46,14 @@ const serverlessConfiguration: AWS = {
       define: { 'require.resolve': undefined },
       platform: 'node',
       concurrency: 10,
+    },
+    dynamodb: {
+      stages: ["dev", "local"],
+      start: {
+        port: 8000,
+        inMemory: true,
+        migrate: true,
+      },
     },
   },
   resources: {
@@ -58,7 +69,7 @@ const serverlessConfiguration: AWS = {
           AttributeDefinitions: [
             {
               AttributeName: "id",
-              AttributeTpe: "S"
+              AttributeType: "S"
             }
           ],
           KeySchema: [
